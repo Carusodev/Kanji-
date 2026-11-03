@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giapponese & Cinese: 21 Kanji Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 font-sans select-none">
+
+    <!-- Header & Toggle Modalità -->
+    <header class="w-full max-w-xl text-center py-4">
+        <h1 class="text-2xl font-extrabold tracking-wide text-emerald-400 mb-1">Kanji & Hanzi Master</h1>
+        <p class="text-xs text-slate-400 mb-4">Studia i 21 Kanji/Hanzi essenziali con Flashcard o Quiz</p>
+        
+        <div class="inline-flex rounded-xl bg-slate-800 p-1 border border-slate-700">
+            <button id="mode-cards-btn" onclick="setMode('cards')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-slate-950">
+                🎴 Flashcard
+            </button>
+            <button id="mode-quiz-btn" onclick="setMode('quiz')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+                🏆 Quiz Interattivo
+            </button>
+        </div>
+    </header>
+
+    <!-- Modalità Flashcard -->
+    <main id="cards-view" class="w-full max-w-md flex flex-col items-center my-auto">
+        <div class="text-xs font-semibold text-slate-400 mb-2">
+            Carta <span id="current-card" class="text-emerald-400 font-bold">1</span> di <span id="total-cards">22</span>
+        </div>
+
+        <div id="flashcard" onclick="flipCard()" class="w-full h-80 bg-slate-800 border-2 border-slate-700 rounded-2xl shadow-2xl flex flex-col items-center justify-center p-6 cursor-pointer relative transition-all duration-300 hover:border-emerald-500/50">
+            <span id="card-side-badge" class="absolute top-4 right-4 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">Fronte</span>
+            
+            <div id="card-content" class="text-center flex flex-col items-center justify-center w-full"></div>
+
+            <div class="absolute bottom-3 text-[11px] text-slate-500 italic">
+                Clicca sulla carta per girarla 🔄
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between w-full mt-5 gap-3">
+            <button onclick="prevCard()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-3 px-3 rounded-xl border border-slate-700 transition active:scale-95">
+                ⬅️ Precedente
+            </button>
+            <button onclick="shuffleCards()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold py-3 px-3 rounded-xl transition active:scale-95">
+                🔀 Mischia
+            </button>
+            <button onclick="nextCard()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold py-3 px-3 rounded-xl transition active:scale-95">
+                Successiva ➡️
+            </button>
+        </div>
+    </main>
+
+    <!-- Modalità Quiz -->
+    <main id="quiz-view" class="w-full max-w-md flex flex-col items-center my-auto hidden">
+        <div class="w-full flex justify-between items-center text-xs text-slate-400 mb-3 px-1">
+            <span>Domanda <strong id="quiz-progress" class="text-emerald-400">1</strong> di <strong id="quiz-total">10</strong></span>
+            <span>Punteggio: <strong id="quiz-score" class="text-emerald-400">0</strong></span>
+        </div>
+
+        <div class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl flex flex-col items-center">
+            <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-2">Qual è la lettura o il significato?</span>
+            <div id="quiz-question-kanji" class="text-6xl font-extrabold text-white my-3"></div>
+            <p id="quiz-question-text" class="text-sm text-slate-300 text-center mb-5 font-medium"></p>
+
+            <div id="quiz-options" class="w-full flex flex-col gap-2.5"></div>
+        </div>
+
+        <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl transition hidden">
+            Prossima Domanda ➡️
+        </button>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-xl text-center py-3 text-[11px] text-slate-500">
+        Usa le frecce direzionali o la barra spaziatrice per muoverti tra le flashcard.
+    </footer>
+
+    <script>
+        const cardsData = [
+            { kanji: "一", pinyin: "yī", onyomi: "イチ (ichi)", kunyomi: "ひと・つ (hitotsu)", meaning: "Uno", hint: "Un singolo tratto orizzontale.", title: "1 (Uno)" },
+            { kanji: "二", pinyin: "èr", onyomi: "ニ (ni)", kunyomi: "ふた・つ (futatsu)", meaning: "Due", hint: "Due tratti orizzontali.", title: "2 (Due)" },
+            { kanji: "三", pinyin: "sān", onyomi: "サン (san)", kunyomi: "みっ・つ (mittsu)", meaning: "Tre", hint: "Tre tratti orizzontali.", title: "3 (Tre)" },
+            { kanji: "四", pinyin: "sì", onyomi: "シ (shi)", kunyomi: "よん / よっつ (yon / yottsu)", meaning: "Quattro", hint: "Una cornice con sbarre interne.", title: "4 (Quattro)" },
+            { kanji: "五", pinyin: "wǔ", onyomi: "ゴ (go)", kunyomi: "いつ・つ (itsutsu)", meaning: "Cinque", hint: "Forma a zeta con base inferiore.", title: "5 (Cinque)" },
+            { kanji: "六", pinyin: "liù", onyomi: "ロク (roku)", kunyomi: "むっ・つ (muttsu)", meaning: "Sei", hint: "Tetto superiore e due gambe aperte.", title: "6 (Sei)" },
+            { kanji: "七", pinyin: "qī", onyomi: "シチ (shichi)", kunyomi: "なな・つ (nanatsu)", meaning: "Sette", hint: "Taglio incrociato su linea orizzontale.", title: "7 (Sette)" },
+            { kanji: "八", pinyin: "bā", onyomi: "ハチ (hachi)", kunyomi: "やっ・つ (yattsu)", meaning: "Otto", hint: "Due linee che si separano in basso.", title: "8 (Otto)" },
+            { kanji: "九", pinyin: "jiǔ", onyomi: "ク / キュウ (kyuu / ku)", kunyomi: "ここの・つ (kokonotsu)", meaning: "Nove", hint: "Tratto curvo incrociato.", title: "9 (Nove)" },
+            { kanji: "十", pinyin: "shí", onyomi: "ジュウ (juu)", kunyomi: "とお (too)", meaning: "Dieci", hint: "Forma di croce (+) perfetta.", title: "10 (Dieci)" },
+            { kanji: "川", pinyin: "chuān", onyomi: "セン (sen)", kunyomi: "かわ (kawa)", meaning: "Fiume", hint: "Tre linee verticali come acqua corrente.", title: "Fiume" },
+            { kanji: "山", pinyin: "shān", onyomi: "サン (san)", kunyomi: "やま (yama)", meaning: "Montagna", hint: "Tre picchi rocciosi puntati in alto.", title: "Montagna" },
+            { kanji: "月", pinyin: "yuè", onyomi: "ゲツ / ガツ (getsu / gatsu)", kunyomi: "つき (tsuki)", meaning: "Luna / Mese", hint: "Falce di luna nel cielo.", title: "Luna / Mese" },
+            { kanji: "日", pinyin: "rì", onyomi: "ニチ / ジツ (nichi / jitsu)", kunyomi: "ひ / か (hi / ka)", meaning: "Sole / Giorno", hint: "Disco solare con un raggio al centro.", title: "Sole / Giorno" },
+            { kanji: "木", pinyin: "mù", onyomi: "モク / ボク (moku / boku)", kunyomi: "き (ki)", meaning: "Albero / Legno", hint: "Tronco con rami e radici.", title: "Albero / Legno" },
+            { kanji: "林", pinyin: "lín", onyomi: "リン (rin)", kunyomi: "はやし (hayashi)", meaning: "Boschetto", hint: "Due alberi (木 + 木) affiancati.", title: "Boschetto" },
+            { kanji: "森", pinyin: "sēn", onyomi: "シン (shin)", kunyomi: "もり (mori)", meaning: "Foresta", hint: "Tre alberi disposti a piramide.", title: "Foresta" },
+            { kanji: "土", pinyin: "tǔ", onyomi: "ド / ト (do / to)", kunyomi: "つち (tsuchi)", meaning: "Terra / Suolo", hint: "Germoglio che spunta dal terreno.", title: "Terra / Suolo" },
+            { kanji: "畑", pinyin: "tián (radicale)", onyomi: "Nessuna comune", kunyomi: "はたけ (hatake)", meaning: "Campo coltivato", hint: "Kanji giapponese: Terra (土) + fuoco/lavoro.", title: "Campo coltivato" },
+            { kanji: "里", pinyin: "lǐ", onyomi: "リ (ri)", kunyomi: "さと (sato)", meaning: "Villaggio / Patria", hint: "Campi coltivati (田) + terra (土).", title: "Villaggio" },
+            { kanji: "石", pinyin: "shí", onyomi: "セキ / シャク (seki / shaku)", kunyomi: "いし (ishi)", meaning: "Pietra / Sasso", hint: "Roccia sotto una parete scoscesa.", title: "Pietra / Sasso" },
+            { kanji: "岩", pinyin: "yán", onyomi: "ガン (gan)", kunyomi: "いわ (iwa)", meaning: "Rupe / Roccia grande", hint: "Montagna (山) fatta di pietra (石).", title: "Rupe / Roccia" }
+        ];
+
+        let currentIndex = 0;
+        let isFlipped = false;
+        let activeMode = 'cards';
+
+        // Quiz State
+        let quizQuestions = [];
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+        let quizAnswered = false;
+
+        // Flashcard functions
+        function renderCard() {
+            const card = cardsData[currentIndex];
+            document.getElementById("current-card").textContent = currentIndex + 1;
+            document.getElementById("total-cards").textContent = cardsData.length;
+            const badge = document.getElementById("card-side-badge");
+            
+            badge.textContent = isFlipped ? "Retro (Soluzione)" : "Fronte";
+            badge.className = `absolute top-4 right-4 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${isFlipped ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-slate-300'}`;
+
+            const content = document.getElementById("card-content");
+            if (!isFlipped) {
+                content.innerHTML = `
+                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-1">${card.title}</span>
+                    <div class="text-6xl font-extrabold my-3 text-white tracking-widest">${card.kanji}</div>
+                    <p class="text-xs text-slate-400 mt-2">💡 ${card.hint}</p>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-2xl font-bold text-emerald-400 mb-2">${card.kanji} <span class="text-base font-normal text-slate-300">(${card.meaning})</span></div>
+                    <div class="w-full text-left bg-slate-900/70 p-3 rounded-xl border border-slate-700/60 space-y-1 text-xs">
+                        <p><strong class="text-emerald-300">Cinese (Pinyin):</strong> ${card.pinyin}</p>
+                        <p><strong class="text-emerald-300">On'yomi (JP):</strong> ${card.onyomi}</p>
+                        <p><strong class="text-emerald-300">Kun'yomi (JP):</strong> ${card.kunyomi}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function flipCard() { isFlipped = !isFlipped; renderCard(); }
+        function nextCard() { isFlipped = false; currentIndex = (currentIndex + 1) % cardsData.length; renderCard(); }
+        function prevCard() { isFlipped = false; currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length; renderCard(); }
+        function shuffleCards() {
+            for (let i = cardsData.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cardsData[i], cardsData[j]] = [cardsData[j], cardsData[i]];
+            }
+            currentIndex = 0; isFlipped = false; renderCard();
+        }
+
+        // Mode Switching
+        function setMode(mode) {
+            activeMode = mode;
+            const cardsView = document.getElementById('cards-view');
+            const quizView = document.getElementById('quiz-view');
+            const cardsBtn = document.getElementById('mode-cards-btn');
+            const quizBtn = document.getElementById('mode-quiz-btn');
+
+            if (mode === 'cards') {
+                cardsView.classList.remove('hidden');
+                quizView.classList.add('hidden');
+                cardsBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-slate-950";
+                quizBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+                renderCard();
+            } else {
+                cardsView.classList.add('hidden');
+                quizView.classList.remove('hidden');
+                quizBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-slate-950";
+                cardsBtn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+                startQuiz();
+            }
+        }
+
+        // Quiz Logic
+        function startQuiz() {
+            quizScore = 0;
+            currentQuizIndex = 0;
+            quizQuestions = [...cardsData].sort(() => 0.5 - Math.random()).slice(0, 10);
+            document.getElementById('quiz-total').textContent = quizQuestions.length;
+            document.getElementById('quiz-score').textContent = quizScore;
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            quizAnswered = false;
+            document.getElementById('quiz-next-btn').classList.add('hidden');
+            const q = quizQuestions[currentQuizIndex];
+            document.getElementById('quiz-progress').textContent = currentQuizIndex + 1;
+            document.getElementById('quiz-question-kanji').textContent = q.kanji;
+            document.getElementById('quiz-question-text').textContent = `Qual è la lettura Kun'yomi o il significato corretto?`;
+
+            // Prepare options
+            const correctAnswer = `${q.kunyomi} (${q.meaning})`;
+            let options = [correctAnswer];
+            
+            while (options.length < 4) {
+                const randomItem = cardsData[Math.floor(Math.random() * cardsData.length)];
+                const randomOpt = `${randomItem.kunyomi} (${randomItem.meaning})`;
+                if (!options.includes(randomOpt)) {
+                    options.push(randomOpt);
+                }
+            }
+            options.sort(() => 0.5 - Math.random());
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-700 text-xs font-medium transition text-slate-200";
+                btn.textContent = opt;
+                btn.onclick = () => checkQuizAnswer(btn, opt, correctAnswer);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkQuizAnswer(selectedBtn, selectedOpt, correctOpt) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+
+            const optionsContainer = document.getElementById('quiz-options');
+            const buttons = optionsContainer.querySelectorAll('button');
+
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctOpt) {
+                    btn.className = "w-full text-left p-3 rounded-xl border border-emerald-500 bg-emerald-500/20 text-emerald-300 text-xs font-bold";
+                } else if (btn === selectedBtn) {
+                    btn.className = "w-full text-left p-3 rounded-xl border border-rose-500 bg-rose-500/20 text-rose-300 text-xs font-bold";
+                }
+            });
+
+            if (selectedOpt === correctOpt) {
+                quizScore += 10;
+                document.getElementById('quiz-score').textContent = quizScore;
+            }
+
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            currentQuizIndex++;
+            if (currentQuizIndex < quizQuestions.length) {
+                renderQuizQuestion();
+            } else {
+                showQuizResults();
+            }
+        }
+
+        function showQuizResults() {
+            document.getElementById('quiz-question-kanji').textContent = "🎉";
+            document.getElementById('quiz-question-text').textContent = `Quiz Completato! Il tuo punteggio finale è ${quizScore} su ${quizQuestions.length * 10}!`;
+            document.getElementById('quiz-options').innerHTML = `
+                <button onclick="startQuiz()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition">
+                    🔄 Ricomincia Quiz
+                </button>
+            `;
+            document.getElementById('quiz-next-btn').classList.add('hidden');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (activeMode === 'cards') {
+                if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+                    e.preventDefault(); flipCard();
+                } else if (e.code === 'ArrowRight') { nextCard(); }
+                else if (e.code === 'ArrowLeft') { prevCard(); }
+            }
+        });
+
+        // Initialize
+        renderCard();
+    </script>
+</body>
+</html>
