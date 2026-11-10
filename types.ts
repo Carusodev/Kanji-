@@ -1,0 +1,18 @@
+export interface KanjiCard {
+    kanji: string;
+    pinyin: string;
+    onyomi: string;
+    kunyomi: string;
+    meaning: string;
+    hint: string;
+    title: string;
+}
+
+export interface StudyProgress {
+    points: number;
+    reviewKanji: string[];
+    unlockedCount: number;
+    showItalian: boolean;
+}
+
+export type StudyMode = "home" | "cards" | "learn" | "quiz";
