@@ -13,6 +13,18 @@ export interface StudyProgress {
     reviewKanji: string[];
     unlockedCount: number;
     showItalian: boolean;
+    updatedAt: string;
+    quizHistory: QuizResult[];
 }
 
-export type StudyMode = "home" | "cards" | "learn" | "quiz";
+export interface QuizResult {
+    id: string;
+    playedAt: string;
+    correct: number;
+    total: number;
+    pointsEarned: number;
+    unlockedKanji: string | null;
+    quizType: "kanji" | "katakana" | "hiragana";
+}
+
+export type StudyMode = "home" | "cards" | "learn" | "quiz" | "vocabulary" | "katakana" | "hiragana";
